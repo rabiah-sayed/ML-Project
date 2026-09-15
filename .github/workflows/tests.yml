@@ -1,0 +1,30 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run migrations
+        run: python manage.py migrate --noinput
+        env:
+          SECRET_KEY: ci-test-key
+
+      - name: Run test suite
+        run: python manage.py test accounts orders catalog
+        env:
+          SECRET_KEY: ci-test-key

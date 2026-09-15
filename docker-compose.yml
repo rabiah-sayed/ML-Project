@@ -1,0 +1,79 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: pricesense
+      POSTGRES_USER: pricesense
+      POSTGRES_PASSWORD: pricesense
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pricesense"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             gunicorn pricesense.wsgi:application --bind 0.0.0.0:8000 --workers 3"
+    ports:
+      - "8000:8000"
+    environment: &app_env
+      USE_POSTGRES: "True"
+      DB_HOST: postgres
+      DB_NAME: pricesense
+      DB_USER: pricesense
+      DB_PASSWORD: pricesense
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      ALLOWED_HOSTS: localhost,127.0.0.1
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - media:/app/media
+      - ml_model_cache:/app/ml/model_cache
+
+  celery-worker:
+    build: .
+    command: celery -A pricesense worker -l info
+    environment: *app_env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - media:/app/media
+      - ml_model_cache:/app/ml/model_cache
+
+  celery-beat:
+    build: .
+    command: celery -A pricesense beat -l info
+    environment: *app_env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  media:
+  ml_model_cache:

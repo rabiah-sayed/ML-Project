@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load catalog_extras %}
+{% block title %}Wishlist - PriceSense{% endblock %}
+{% block content %}
+<div class="account-layout">
+    {% include "accounts/_account_nav.html" %}
+    <div>
+        <h2>My Wishlist</h2>
+        {% if items %}
+        <div class="product-grid product-grid-full">
+            {% for item in items %}
+                {% with product=item.product %}
+                <div class="product-card">
+                    <a href="{% url 'product_detail' product.id %}" class="product-card-link">
+                        <div class="product-image-stage">
+                            {% if product.discount_percent %}<span class="discount-badge">-{{ product.discount_percent }}%</span>{% endif %}
+                            {% if product.image %}
+                                <img class="product-image" src="{{ product.image.url }}" alt="{{ product.name }}">
+                            {% else %}
+                                <div class="product-icon-tile" style="background: linear-gradient(160deg, hsl({{ product.category.name|category_hue }}, 60%, 40%), hsl({{ product.category.name|category_hue }}, 65%, 22%));">
+                                    {% product_icon product %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="product-card-body">
+                            <h3>{{ product.name }}</h3>
+                            <p class="product-category-tag">{{ product.category.name }}</p>
+                            <p><span class="price">{{ product.current_price }}</span></p>
+                        </div>
+                    </a>
+                    <div class="product-card-actions" style="display:flex; gap:8px;">
+                        <form method="post" action="{% url 'add_to_cart' product.id %}" style="flex:1;">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{% url 'wishlist_list' %}">
+                            <button type="submit" class="secondary btn-sm card-add-btn">Add to Cart</button>
+                        </form>
+                        <form method="post" action="{% url 'toggle_wishlist' product.id %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{% url 'wishlist_list' %}">
+                            <button type="submit" class="icon-only-btn" title="Remove from wishlist">
+                                <svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% endwith %}
+            {% endfor %}
+        </div>
+        {% else %}
+            <div class="card">
+                <p>Nothing in your wishlist yet. <a href="{% url 'product_list' %}">Browse products</a> and tap the heart icon to save one for later.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

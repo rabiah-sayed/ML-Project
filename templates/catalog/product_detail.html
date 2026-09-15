@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+{% load catalog_extras %}
+{% block title %}{{ product.name }} - PriceSense{% endblock %}
+{% block content %}
+<p><a href="{% url 'product_list' %}">&laquo; Back to shop</a></p>
+
+{% if just_fired_order %}
+    <div class="card" style="border-color:var(--success-fg); background:var(--success-bg);">
+        <strong style="color:var(--success-fg);">&#127919; Trigger reached!</strong>
+        <p style="color:var(--text); margin:6px 0 0;">
+            {{ product.name }} hit your target price of {{ just_fired_order.trigger.target_price }} --
+            <a href="{% url 'order_tracking' just_fired_order.id %}">Order #{{ just_fired_order.id }}</a> was placed automatically at {{ just_fired_order.price_paid }}.
+            You can cancel it until {{ just_fired_order.cancellable_until|date:"Y-m-d H:i" }} from
+            <a href="{% url 'my_orders' %}">My Orders</a>.
+        </p>
+    </div>
+{% endif %}
+
+<div class="card product-detail-grid">
+    <div class="product-image-stage">
+        {% if product.discount_percent %}<span class="discount-badge">-{{ product.discount_percent }}%</span>{% endif %}
+        {% if product.image %}
+            <img class="product-image" src="{{ product.image.url }}" alt="{{ product.name }}">
+        {% else %}
+            <div class="product-icon-tile" style="background: linear-gradient(160deg, hsl({{ product.category.name|category_hue }}, 60%, 40%), hsl({{ product.category.name|category_hue }}, 65%, 22%));">
+                {% product_icon product %}
+            </div>
+        {% endif %}
+    </div>
+
+    <div>
+        <h2 style="margin-bottom:4px;">{{ product.name }}</h2>
+        <p class="product-category-tag" style="margin-bottom:4px;">{{ product.category.name }}</p>
+        {% if product.review_count %}
+            <p style="margin-bottom:14px; color:var(--text-muted); font-size:0.9rem;">&#9733; {{ product.average_rating|floatformat:1 }} ({{ product.review_count }} review{{ product.review_count|pluralize }})</p>
+        {% else %}
+            <p style="margin-bottom:14px; color:var(--text-faint); font-size:0.9rem;">No reviews yet</p>
+        {% endif %}
+
+        {% if anomaly and anomaly.is_anomaly %}
+            <span class="badge {% if anomaly.is_good_deal %}good-deal{% else %}high{% endif %}">{{ anomaly.message }}</span>
+        {% elif anomaly %}
+            <span class="badge normal">{{ anomaly.message }}</span>
+        {% endif %}
+
+        <div style="margin-bottom:14px;">
+            {% if product.discount_percent %}
+                <span class="price strike">{{ product.base_price }}</span>
+            {% endif %}
+            <span class="price" style="font-size:1.5rem;">{{ product.current_price }}</span>
+            <div style="color:var(--text-faint); font-size:0.85rem; margin-top:4px;">Lowest ever: {{ product.lowest_price }}</div>
+        </div>
+
+        <p>{{ product.description }}</p>
+
+        {% if user.is_authenticated %}
+        <form method="post" action="{% url 'add_to_cart' product.id %}" style="display:flex; gap:12px; margin-top:16px; flex-wrap: wrap; align-items:center;">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{% url 'cart_detail' %}">
+            <div class="qty-stepper">
+                <button type="button" onclick="stepQty(-1)">&minus;</button>
+                <span class="qty-value" id="qty-display">1</span>
+                <button type="button" onclick="stepQty(1)">&plus;</button>
+            </div>
+            <input type="hidden" name="qty" id="qty-input" value="1">
+            <button type="submit">Add to Cart</button>
+        </form>
+        <div style="display:flex; gap:12px; margin-top:12px; flex-wrap: wrap;">
+            <form method="post" action="{% url 'buy_now' product.id %}">{% csrf_token %}<button type="submit" class="secondary">Buy Now</button></form>
+            <button type="button" class="outline" onclick="document.getElementById('trigger-modal').showModal()">Set Trigger Price</button>
+            <form method="post" action="{% url 'toggle_wishlist' product.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <button type="submit" class="{% if is_wishlisted %}outline{% else %}secondary{% endif %}" title="{% if is_wishlisted %}Remove from wishlist{% else %}Add to wishlist{% endif %}">
+                    {% if is_wishlisted %}&#9829; Wishlisted{% else %}&#9825; Wishlist{% endif %}
+                </button>
+            </form>
+        </div>
+
+        {% if user_triggers %}
+        <div style="margin-top:16px;">
+            <div style="color:var(--text-faint); font-size:0.8rem; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:6px;">Your triggers on this product</div>
+            {% for t in user_triggers %}
+                <div style="display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border);">
+                    <span class="badge {% if t.status == 'active' %}normal{% elif t.status == 'fired' %}good-deal{% else %}high{% endif %}" style="margin:0;">{{ t.get_status_display }}</span>
+                    <span style="color:var(--text); font-size:0.9rem;">Target: {{ t.target_price }}</span>
+                    {% if t.eta.days == 0 %}
+                        <span style="font-size:0.85rem; font-weight:600; color:var(--success-fg);">Already there</span>
+                    {% elif t.eta %}
+                        <span style="font-size:0.85rem; color:var(--text-muted);">expected ~{{ t.eta.days }}d ({{ t.eta.date }})</span>
+                    {% endif %}
+                    {% if t.fire_probability != None %}
+                        <span style="font-size:0.85rem; font-weight:600; color:{% if t.fire_probability >= 50 %}var(--success-fg){% elif t.fire_probability >= 15 %}var(--gold){% else %}var(--danger-fg){% endif %};">≈{{ t.fire_probability }}% in 14d</span>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% else %}
+        <p style="margin-top:16px;"><a href="{% url 'login' %}" class="btn">Login to buy</a></p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card">
+    <h3>Price History &amp; 14-Day Forecast</h3>
+    <p style="font-size:0.85rem; margin-top:-6px;">The dashed line and shaded band past today are Prophet's predicted price and confidence interval -- not just historical data.</p>
+    <div style="margin-bottom:10px;">
+        <button type="button" class="secondary btn-sm" onclick="loadHistory('6mo')">6 Months</button>
+        <button type="button" class="secondary btn-sm" onclick="loadHistory('1yr')">1 Year</button>
+    </div>
+    <canvas id="priceChart" height="90"></canvas>
+</div>
+
+<div class="card">
+    <h3>Reviews {% if product.review_count %}({{ product.review_count }}){% endif %}</h3>
+
+    {% if can_review %}
+    <form method="post" action="{% url 'submit_review' product.id %}" style="max-width:480px; margin-bottom:20px;">
+        {% csrf_token %}
+        <div class="form-row">
+            <label for="{{ review_form.rating.id_for_label }}">{% if user_review %}Update your rating{% else %}Your rating{% endif %}</label>
+            {{ review_form.rating }}
+        </div>
+        <div class="form-row">
+            <label for="{{ review_form.comment.id_for_label }}">Comment (optional)</label>
+            {{ review_form.comment }}
+        </div>
+        <button type="submit">{% if user_review %}Update Review{% else %}Submit Review{% endif %}</button>
+    </form>
+    {% elif user.is_authenticated %}
+        <p style="margin-bottom:20px;">You can review this product once it's been delivered to you.</p>
+    {% else %}
+        <p style="margin-bottom:20px;"><a href="{% url 'login' %}">Log in</a> to leave a review.</p>
+    {% endif %}
+
+    {% if user_review %}
+        <div style="padding:10px 0; border-bottom:1px solid var(--border);">
+            <strong style="color:var(--text);">{{ user_review.user.username }} (you)</strong>
+            <span class="badge good-deal" style="margin:0 0 0 8px; padding:2px 8px; font-size:0.7rem;">Verified Purchase</span>
+            <span style="color:var(--text-muted);"> -- &#9733; {{ user_review.rating }}/5</span>
+            {% if user_review.comment %}<p style="margin:4px 0 0;">{{ user_review.comment }}</p>{% endif %}
+        </div>
+    {% endif %}
+    {% for r in reviews %}
+        <div style="padding:10px 0; border-bottom:1px solid var(--border);">
+            <strong style="color:var(--text);">{{ r.user.username }}</strong>
+            {% if r.user_id in verified_user_ids %}<span class="badge good-deal" style="margin:0 0 0 8px; padding:2px 8px; font-size:0.7rem;">Verified Purchase</span>{% endif %}
+            <span style="color:var(--text-muted);"> -- &#9733; {{ r.rating }}/5</span>
+            {% if r.comment %}<p style="margin:4px 0 0;">{{ r.comment }}</p>{% endif %}
+        </div>
+    {% empty %}
+        {% if not user_review %}<p>No reviews yet -- be the first.</p>{% endif %}
+    {% endfor %}
+</div>
+
+{% if related_products %}
+<div class="card">
+    <h3>You might also like</h3>
+    <div class="product-grid product-grid-full">
+        {% for rp in related_products %}
+            <div class="product-card">
+                <a href="{% url 'product_detail' rp.id %}" class="product-card-link">
+                    <div class="product-image-stage">
+                        {% if rp.discount_percent %}<span class="discount-badge">-{{ rp.discount_percent }}%</span>{% endif %}
+                        {% if rp.image %}
+                            <img class="product-image" src="{{ rp.image.url }}" alt="{{ rp.name }}">
+                        {% else %}
+                            <div class="product-icon-tile" style="background: linear-gradient(160deg, hsl({{ rp.category.name|category_hue }}, 60%, 40%), hsl({{ rp.category.name|category_hue }}, 65%, 22%));">
+                                {% product_icon rp %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="product-card-body">
+                        <h3>{{ rp.name }}</h3>
+                        <p class="product-category-tag">{{ rp.category.name }}</p>
+                        <p><span class="price">{{ rp.current_price }}</span></p>
+                    </div>
+                </a>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% if user.is_authenticated %}
+<dialog id="trigger-modal">
+    <h3>Set Trigger Price</h3>
+    <form method="post" action="{% url 'set_trigger' product.id %}">
+        {% csrf_token %}
+        {% if suggested_price %}<p><small>Suggested: {{ suggested_price }}</small></p>{% endif %}
+        {% for field in trigger_form %}
+            <div class="form-row">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+            </div>
+        {% endfor %}
+        <p id="trigger-probability" style="display:none; font-size:0.85rem; font-weight:600; margin: -6px 0 14px;"></p>
+        <button type="submit">Set Trigger</button>
+        <button type="button" class="secondary" onclick="document.getElementById('trigger-modal').close()">Cancel</button>
+    </form>
+</dialog>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+function stepQty(delta) {
+    const el = document.getElementById('qty-display');
+    const input = document.getElementById('qty-input');
+    const next = Math.max(1, parseInt(el.textContent, 10) + delta);
+    el.textContent = next;
+    input.value = next;
+}
+
+// Live readout on the trigger-price modal: WHEN the forecast expects to
+// reach the target (ml.forecasting.estimated_days_to_target -- the same
+// line drawn on the price chart) plus HOW LIKELY within 14 days (a
+// Monte Carlo estimate from Prophet's posterior, trigger_fire_probability).
+// Both recompute as the target price changes.
+let probabilityDebounce;
+const targetPriceInput = document.getElementById('id_target_price');
+const probabilityEl = document.getElementById('trigger-probability');
+if (targetPriceInput && probabilityEl) {
+    targetPriceInput.addEventListener('input', () => {
+        clearTimeout(probabilityDebounce);
+        const value = parseFloat(targetPriceInput.value);
+        if (!value || value <= 0) {
+            probabilityEl.style.display = 'none';
+            return;
+        }
+        probabilityDebounce = setTimeout(async () => {
+            const res = await fetch(`{% url 'api_trigger_probability' product.id %}?target_price=${value}&days=14`);
+            if (!res.ok) { probabilityEl.style.display = 'none'; return; }
+            const data = await res.json();
+            probabilityEl.style.display = 'block';
+
+            let etaLine;
+            if (data.eta_days === 0) {
+                etaLine = 'Already at or below this price!';
+            } else if (data.eta_days) {
+                const dayWord = data.eta_days === 1 ? 'day' : 'days';
+                etaLine = `Expected in ~${data.eta_days} ${dayWord} (around ${data.eta_date})`;
+            } else {
+                etaLine = "Not expected to reach this price soon at current trends";
+            }
+            const probLine = `≈${data.probability}% chance within ${data.horizon_days} days`;
+            probabilityEl.innerHTML = `${etaLine}<br><span style="font-weight:500; opacity:0.85;">${probLine}</span>`;
+            probabilityEl.style.color = data.probability >= 50 ? 'var(--success-fg)' : data.probability >= 15 ? 'var(--gold)' : 'var(--danger-fg)';
+        }, 350);
+    });
+    if (targetPriceInput.value) targetPriceInput.dispatchEvent(new Event('input'));
+}
+
+let chart;
+async function loadHistory(range) {
+    const [historyRes, forecastRes] = await Promise.all([
+        fetch(`{% url 'api_price_history' product.id %}?range=${range}`),
+        fetch(`{% url 'api_forecast' product.id %}?periods=14`),
+    ]);
+    const historyData = await historyRes.json();
+    const forecastData = forecastRes.ok ? await forecastRes.json() : [];
+
+    const historyLabels = historyData.map(d => d.timestamp.slice(0, 10));
+    const prices = historyData.map(d => parseFloat(d.price));
+    const forecastLabels = forecastData.map(d => d.date);
+
+    const labels = [...historyLabels, ...forecastLabels];
+    const priceSeries = [...prices, ...forecastLabels.map(() => null)];
+    const lowerSeries = [...historyLabels.map(() => null), ...forecastData.map(d => d.yhat_lower)];
+    const upperSeries = [...historyLabels.map(() => null), ...forecastData.map(d => d.yhat_upper)];
+    const forecastSeries = [...historyLabels.map(() => null), ...forecastData.map(d => d.yhat)];
+
+    if (chart) chart.destroy();
+    const ctx = document.getElementById('priceChart').getContext('2d');
+    chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [
+                { label: 'Price', data: priceSeries, borderColor: '#a78bfa', backgroundColor: 'rgba(124,58,237,0.15)', fill: true, tension: 0.2, pointRadius: 0 },
+                { label: 'Forecast range', data: lowerSeries, borderWidth: 0, pointRadius: 0, fill: false },
+                { label: 'Forecast range', data: upperSeries, borderWidth: 0, pointRadius: 0, backgroundColor: 'rgba(56,189,248,0.18)', fill: '-1' },
+                { label: 'Forecast', data: forecastSeries, borderColor: '#38bdf8', borderDash: [6, 3], tension: 0.2, pointRadius: 0 },
+            ],
+        },
+        options: {
+            plugins: { legend: { labels: { color: '#9b91b8', filter: (item) => item.text !== 'Forecast range' } } },
+            scales: {
+                x: { ticks: { maxTicksLimit: 10, color: '#9b91b8' }, grid: { color: '#2d2650' } },
+                y: { ticks: { color: '#9b91b8' }, grid: { color: '#2d2650' } },
+            },
+        },
+    });
+}
+loadHistory('6mo');
+</script>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Sign up - PriceSense{% endblock %}
+{% block content %}
+<div class="card" style="max-width:420px;margin:40px auto;">
+    <h2>Create your account</h2>
+    <form method="post">
+        {% csrf_token %}
+        {% for field in form %}
+            <div class="form-row">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% for error in field.errors %}<p class="message error">{{ error }}</p>{% endfor %}
+                {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}
+            </div>
+        {% endfor %}
+        <button type="submit">Sign up</button>
+    </form>
+    <p style="margin-top:14px;">Already have an account? <a href="{% url 'login' %}">Log in</a></p>
+</div>
+{% endblock %}

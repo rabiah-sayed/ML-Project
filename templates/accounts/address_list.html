@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Addresses - PriceSense{% endblock %}
+{% block content %}
+<div class="account-layout">
+    {% include "accounts/_account_nav.html" %}
+    <div>
+        <h2>Addresses</h2>
+        <div class="card" style="padding:0;">
+            {% if addresses %}
+                <table>
+                    <thead><tr><th>Label</th><th>Address</th><th>City</th><th>Pincode</th></tr></thead>
+                    <tbody>
+                    {% for a in addresses %}
+                        <tr><td>{{ a.get_label_display }}</td><td>{{ a.line1 }}</td><td>{{ a.city }}</td><td>{{ a.pincode }}</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p style="padding:22px 24px; margin:0;">No addresses yet.</p>
+            {% endif %}
+        </div>
+
+        <div class="card" style="max-width:420px;">
+            <h3 style="margin-top:0;">Add a new address</h3>
+            <form method="post">
+                {% csrf_token %}
+                {% for field in form %}
+                    <div class="form-row">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                    </div>
+                {% endfor %}
+                <button type="submit">Add address</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

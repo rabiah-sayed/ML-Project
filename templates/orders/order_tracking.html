@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Order #{{ order.id }} - PriceSense{% endblock %}
+{% block content %}
+<p><a href="{% url 'my_orders' %}">&laquo; Back to My Orders</a></p>
+
+<div class="card">
+    <h2 style="margin-bottom:4px;">Order #{{ order.id }}</h2>
+    <p style="margin-bottom:18px;">{{ order.product.name }} -- {{ order.price_paid }} ({{ order.get_payment_method_display }})</p>
+
+    {% if order.status == 'cancelled' %}
+        <span class="badge high">Cancelled</span>
+        <p>This order was cancelled and will not be fulfilled.</p>
+    {% else %}
+        <div class="tracking-stepper">
+            {% for stage in stages %}
+                <div class="tracking-step {% if stage.reached %}reached{% endif %} {% if stage.current %}current{% endif %}">
+                    <div class="tracking-step-dot">{% if stage.reached and not stage.current %}&#10003;{% endif %}</div>
+                    <div class="tracking-step-label">{{ stage.label }}</div>
+                    {% if stage.at %}<div class="tracking-step-date">{{ stage.at|date:"M j, H:i" }}</div>{% endif %}
+                </div>
+            {% endfor %}
+        </div>
+
+        {% if order.status == 'pending_cancellation' %}
+            <p style="margin-top:18px;">This order was placed automatically by a price trigger. It's confirmed and starts shipping after the 48-hour cancellation window --
+            you can still cancel it until {{ order.cancellable_until|date:"Y-m-d H:i" }} from <a href="{% url 'my_orders' %}">My Orders</a>.</p>
+        {% elif order.status == 'delivered' %}
+            <p style="margin-top:18px; color:var(--success-fg);">Delivered! You can leave a review from the <a href="{% url 'product_detail' order.product.id %}">product page</a>.</p>
+        {% endif %}
+    {% endif %}
+</div>
+
+<div class="card">
+    <h3 style="margin-top:0;">Shipping to</h3>
+    <p>{{ order.address.line1 }}, {{ order.address.city }} - {{ order.address.pincode }}</p>
+</div>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}ML Insights - PriceSense{% endblock %}
+{% block content %}
+<h2>ML Insights: Forecast Accuracy</h2>
+<p>Predicted vs. actual price over a held-out window, per product, using the Prophet forecasting model in <code>ml/forecasting.py</code>. Scored against two comparisons: a naive "persistence" baseline (tomorrow = last known price), and Holt-Winters exponential smoothing -- a classical statistical model with the same trend + weekly-seasonality assumption as Prophet, for a fair head-to-head.</p>
+
+{% if not results %}
+    <div class="card">
+        <p>No products have enough price history yet. Run:</p>
+        <pre>python manage.py backfill_price_history</pre>
+    </div>
+{% endif %}
+
+{% for r in results %}
+<div class="card">
+    <h3>{{ r.product.name }}</h3>
+
+    <div class="metric-row">
+        <div class="metric"><div class="label">Prophet MAE</div><div class="value">{{ r.evaluation.mae }}</div></div>
+        <div class="metric"><div class="label">Holt-Winters MAE</div><div class="value" style="color:var(--text-muted);">{{ r.evaluation.hw_mae|default:"n/a" }}</div></div>
+        <div class="metric"><div class="label">Naive Baseline MAE</div><div class="value" style="color:var(--text-muted);">{{ r.evaluation.baseline_mae }}</div></div>
+        {% if r.evaluation.improvement_vs_hw_pct != None %}
+        <div class="metric"><div class="label">Prophet vs. Holt-Winters</div><div class="value" style="color:{% if r.evaluation.improvement_vs_hw_pct > 0 %}var(--success-fg){% else %}var(--danger-fg){% endif %};">{{ r.evaluation.improvement_vs_hw_pct }}%</div></div>
+        {% endif %}
+        {% if r.evaluation.improvement_pct != None %}
+        <div class="metric"><div class="label">Prophet vs. Baseline</div><div class="value" style="color:{% if r.evaluation.improvement_pct > 0 %}var(--success-fg){% else %}var(--danger-fg){% endif %};">{{ r.evaluation.improvement_pct }}%</div></div>
+        {% endif %}
+    </div>
+
+    <canvas id="chart-{{ r.product.id }}" height="80"></canvas>
+
+    {% if r.cv_summary %}
+    <div style="margin-top:18px;">
+        <div style="color:var(--text-faint); font-size:0.8rem; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:8px;">
+            Cross-validation ({{ r.cv_summary.num_cutoffs }} rolling cutoffs)
+        </div>
+        <table>
+            <thead><tr><th>Horizon</th><th>RMSE</th><th>MAE</th>{% if r.cv_summary.by_horizon.0.mape_pct != None %}<th>MAPE</th>{% endif %}</tr></thead>
+            <tbody>
+            {% for row in r.cv_summary.by_horizon %}
+                <tr>
+                    <td>{{ row.horizon_days }} day{{ row.horizon_days|pluralize }}</td>
+                    <td>{{ row.rmse }}</td>
+                    <td>{{ row.mae }}</td>
+                    {% if row.mape_pct != None %}<td>{{ row.mape_pct }}%</td>{% endif %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p style="margin-top:14px; font-size:0.85rem;">Cross-validation not yet computed for this product -- run <code>python manage.py retrain_models</code> (needs 90+ days of history).</p>
+    {% endif %}
+
+    {% if r.component_plot %}
+    <div style="margin-top:18px;">
+        <div style="color:var(--text-faint); font-size:0.8rem; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:8px;">Trend &amp; weekly seasonality (Prophet decomposition)</div>
+        <img src="{{ r.component_plot }}" alt="Trend and seasonality decomposition for {{ r.product.name }}" style="width:100%; max-width:560px; border-radius:var(--radius-sm); border:1px solid var(--border);">
+    </div>
+    {% endif %}
+</div>
+{% endfor %}
+{{ chart_data|json_script:"chart-data" }}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+const datasets = JSON.parse(document.getElementById('chart-data').textContent);
+Object.entries(datasets).forEach(([id, d]) => {
+    new Chart(document.getElementById(`chart-${id}`).getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: d.dates,
+            datasets: [
+                { label: 'Actual', data: d.actual, borderColor: '#a78bfa', pointRadius: 2 },
+                { label: 'Prophet', data: d.predicted, borderColor: '#f59e0b', borderDash: [5, 4], pointRadius: 2 },
+                { label: 'Holt-Winters', data: d.hw_predicted || [], borderColor: '#38bdf8', borderDash: [6, 3], pointRadius: 0 },
+                { label: 'Naive baseline', data: d.baseline_predicted, borderColor: '#6d6390', borderDash: [2, 3], pointRadius: 0 },
+            ],
+        },
+        options: {
+            plugins: { legend: { labels: { color: '#9b91b8' } } },
+            scales: {
+                x: { ticks: { color: '#9b91b8' }, grid: { color: '#2d2650' } },
+                y: { ticks: { color: '#9b91b8' }, grid: { color: '#2d2650' } },
+            },
+        },
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,7 @@
+<nav class="account-nav">
+    <a href="{% url 'my_orders' %}" class="{% if request.resolver_match.url_name == 'my_orders' %}active{% endif %}">Orders</a>
+    <a href="{% url 'my_triggers' %}" class="{% if request.resolver_match.url_name == 'my_triggers' %}active{% endif %}">Triggers</a>
+    <a href="{% url 'wishlist_list' %}" class="{% if request.resolver_match.url_name == 'wishlist_list' %}active{% endif %}">Wishlist</a>
+    <a href="{% url 'address_list' %}" class="{% if request.resolver_match.url_name == 'address_list' %}active{% endif %}">Addresses</a>
+    <a href="{% url 'wallet_detail' %}" class="{% if request.resolver_match.url_name == 'wallet_detail' %}active{% endif %}">Wallet</a>
+</nav>

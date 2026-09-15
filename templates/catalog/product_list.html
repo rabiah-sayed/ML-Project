@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% load catalog_extras %}
+{% block title %}Shop - PriceSense{% endblock %}
+{% block content %}
+<div class="shop-toolbar">
+    <div>
+        <h2 style="margin-bottom:4px;">
+            {% if query %}Results for "{{ query }}"{% elif selected_category_name %}{{ selected_category_name }}{% else %}All Products{% endif %}
+        </h2>
+        <span class="result-count">{{ page_obj.paginator.count }} product{{ page_obj.paginator.count|pluralize }}</span>
+        {% if selected_category_name %}
+            <a href="{% url 'product_list' %}{% if query %}?q={{ query }}{% endif %}" class="category-filter-chip">{{ selected_category_name }} &times;</a>
+        {% endif %}
+    </div>
+    <form method="get" id="sort-form">
+        <input type="hidden" name="q" value="{{ query }}">
+        {% if selected_category %}<input type="hidden" name="category" value="{{ selected_category }}">{% endif %}
+        <select name="sort" class="sort-select" onchange="document.getElementById('sort-form').submit()">
+            {% for key, opt in sort_options.items %}
+                <option value="{{ key }}" {% if key == sort %}selected{% endif %}>{{ opt.1 }}</option>
+            {% endfor %}
+        </select>
+    </form>
+</div>
+
+<div class="product-grid product-grid-full">
+    {% for product in page_obj %}
+        <div class="product-card">
+            {% if user.is_authenticated %}
+                <form method="post" action="{% url 'toggle_wishlist' product.id %}" class="wishlist-heart-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <button type="submit" class="wishlist-heart-btn {% if product.id in wishlisted_ids %}active{% endif %}" title="{% if product.id in wishlisted_ids %}Remove from wishlist{% else %}Add to wishlist{% endif %}">
+                        <svg class="icon" viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+                    </button>
+                </form>
+            {% endif %}
+            <a href="{% url 'product_detail' product.id %}" class="product-card-link">
+                <div class="product-image-stage">
+                    {% if product.discount_percent %}<span class="discount-badge">-{{ product.discount_percent }}%</span>{% endif %}
+                    {% if product.image %}
+                        <img class="product-image" src="{{ product.image.url }}" alt="{{ product.name }}">
+                    {% else %}
+                        <div class="product-icon-tile" style="background: linear-gradient(160deg, hsl({{ product.category.name|category_hue }}, 60%, 40%), hsl({{ product.category.name|category_hue }}, 65%, 22%));">
+                            {% product_icon product %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="product-card-body">
+                    <h3>{{ product.name }}</h3>
+                    <p class="product-category-tag">{{ product.category.name }}</p>
+                    <p>
+                        {% if product.discount_percent %}
+                            <span class="price strike">{{ product.base_price }}</span>
+                        {% endif %}
+                        <span class="price">{{ product.current_price }}</span>
+                    </p>
+                </div>
+            </a>
+            {% if user.is_authenticated %}
+                <div class="product-card-actions">
+                    <form method="post" action="{% url 'add_to_cart' product.id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                        <button type="submit" class="secondary btn-sm card-add-btn">Add to Cart</button>
+                    </form>
+                </div>
+            {% endif %}
+        </div>
+    {% empty %}
+        <p>No products found{% if query %} for "{{ query }}"{% endif %}. {% if not query %}Run <code>manage.py seed_products</code>.{% endif %}</p>
+    {% endfor %}
+</div>
+
+<div class="pagination">
+    {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if query %}&q={{ query }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">&laquo; Prev</a>{% endif %}
+    <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if query %}&q={{ query }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">Next &raquo;</a>{% endif %}
+</div>
+{% endblock %}

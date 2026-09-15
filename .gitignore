@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+db.sqlite3
+.env
+staticfiles/
+media/
+ml/model_cache/
+*.log
+real_data_validation/*.xlsx
+real_data_validation/*.zip
+.~lock.*#

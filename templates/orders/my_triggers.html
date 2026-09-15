@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}My Triggers - PriceSense{% endblock %}
+{% block content %}
+<div class="account-layout">
+    {% include "accounts/_account_nav.html" %}
+    <div>
+        <h2>My Triggers</h2>
+        <div class="card" style="padding:0;">
+            <table>
+                <thead><tr><th>Product</th><th>Target Price</th><th>Expected</th><th>Chance within 14d</th><th>Status</th><th>Set On</th><th></th></tr></thead>
+                <tbody>
+                {% for trigger in triggers %}
+                    <tr>
+                        <td><a href="{% url 'product_detail' trigger.product.id %}">{{ trigger.product.name }}</a></td>
+                        <td>{{ trigger.target_price }}</td>
+                        <td>
+                            {% if trigger.eta.days == 0 %}
+                                <span style="color:var(--success-fg); font-weight:600;">Already there</span>
+                            {% elif trigger.eta %}
+                                <span style="color:var(--text);">~{{ trigger.eta.days }}d ({{ trigger.eta.date }})</span>
+                            {% else %}
+                                <span style="color:var(--text-faint);">--</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if trigger.fire_probability != None %}
+                                <span style="font-weight:600; color:{% if trigger.fire_probability >= 50 %}var(--success-fg){% elif trigger.fire_probability >= 15 %}var(--gold){% else %}var(--danger-fg){% endif %};">≈{{ trigger.fire_probability }}%</span>
+                            {% else %}
+                                <span style="color:var(--text-faint);">--</span>
+                            {% endif %}
+                        </td>
+                        <td><span class="badge {% if trigger.status == 'active' %}normal{% elif trigger.status == 'fired' %}good-deal{% else %}high{% endif %}" style="margin:0;">{{ trigger.get_status_display }}</span></td>
+                        <td>{{ trigger.created_at|date:"Y-m-d H:i" }}</td>
+                        <td>
+                            {% if trigger.status == 'active' %}
+                                <form method="post" action="{% url 'cancel_trigger' trigger.id %}">
+                                    {% csrf_token %}<button type="submit" class="secondary btn-sm">Cancel</button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="7">No triggers yet.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Add your address - PriceSense{% endblock %}
+{% block content %}
+<div class="card" style="max-width:420px;margin:40px auto;">
+    <h2>Welcome! Add a delivery address</h2>
+    <p>We've also created a wallet for you -- you can add funds to it next.</p>
+    <form method="post">
+        {% csrf_token %}
+        {% for field in form %}
+            <div class="form-row">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% for error in field.errors %}<p class="message error">{{ error }}</p>{% endfor %}
+            </div>
+        {% endfor %}
+        <button type="submit">Save address</button>
+    </form>
+</div>
+{% endblock %}

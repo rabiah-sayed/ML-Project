@@ -1,0 +1,126 @@
+{
+  "results": [
+    {
+      "code": "85123A",
+      "label": "WHITE HANGING HEART T-LIGHT HOLDER",
+      "rmse": 0.6,
+      "mae": 0.3,
+      "baseline_rmse": 0.7,
+      "baseline_mae": 0.36,
+      "improvement_pct": 16.7,
+      "hw_rmse": 0.63,
+      "hw_mae": 0.28,
+      "improvement_vs_hw_pct": -7.1
+    },
+    {
+      "code": "21212",
+      "label": "PACK OF 72 RETRO SPOT CAKE CASES",
+      "rmse": 0.67,
+      "mae": 0.49,
+      "baseline_rmse": 0.74,
+      "baseline_mae": 0.55,
+      "improvement_pct": 10.9,
+      "hw_rmse": 0.67,
+      "hw_mae": 0.51,
+      "improvement_vs_hw_pct": 3.9
+    },
+    {
+      "code": "20725",
+      "label": "LUNCH BAG RED SPOTTY",
+      "rmse": 0.93,
+      "mae": 0.66,
+      "baseline_rmse": 0.9,
+      "baseline_mae": 0.65,
+      "improvement_pct": -1.5,
+      "hw_rmse": 0.78,
+      "hw_mae": 0.68,
+      "improvement_vs_hw_pct": 2.9
+    },
+    {
+      "code": "85099B",
+      "label": "JUMBO BAG RED WHITE SPOTTY ",
+      "rmse": 0.32,
+      "mae": 0.24,
+      "baseline_rmse": 0.37,
+      "baseline_mae": 0.27,
+      "improvement_pct": 11.1,
+      "hw_rmse": 0.33,
+      "hw_mae": 0.25,
+      "improvement_vs_hw_pct": 4.0
+    },
+    {
+      "code": "21080",
+      "label": "SET/20 RED SPOTTY PAPER NAPKINS ",
+      "rmse": 0.25,
+      "mae": 0.19,
+      "baseline_rmse": 0.25,
+      "baseline_mae": 0.13,
+      "improvement_pct": -46.2,
+      "hw_rmse": 0.23,
+      "hw_mae": 0.18,
+      "improvement_vs_hw_pct": -5.6
+    },
+    {
+      "code": "84879",
+      "label": "ASSORTED COLOUR BIRD ORNAMENT",
+      "rmse": 0.42,
+      "mae": 0.3,
+      "baseline_rmse": 0.37,
+      "baseline_mae": 0.23,
+      "improvement_pct": -30.4,
+      "hw_rmse": 0.42,
+      "hw_mae": 0.28,
+      "improvement_vs_hw_pct": -7.1
+    },
+    {
+      "code": "21931",
+      "label": "JUMBO STORAGE BAG SUKI",
+      "rmse": 0.44,
+      "mae": 0.38,
+      "baseline_rmse": 1.3,
+      "baseline_mae": 1.22,
+      "improvement_pct": 68.9,
+      "hw_rmse": 0.42,
+      "hw_mae": 0.36,
+      "improvement_vs_hw_pct": -5.6
+    },
+    {
+      "code": "20727",
+      "label": "LUNCH BAG  BLACK SKULL.",
+      "rmse": 0.88,
+      "mae": 0.56,
+      "baseline_rmse": 1.2,
+      "baseline_mae": 0.87,
+      "improvement_pct": 35.6,
+      "hw_rmse": 0.97,
+      "hw_mae": 0.65,
+      "improvement_vs_hw_pct": 13.8
+    },
+    {
+      "code": "20728",
+      "label": "LUNCH BAG CARS BLUE",
+      "rmse": 0.77,
+      "mae": 0.56,
+      "baseline_rmse": 1.08,
+      "baseline_mae": 0.76,
+      "improvement_pct": 26.3,
+      "hw_rmse": 0.87,
+      "hw_mae": 0.55,
+      "improvement_vs_hw_pct": -1.8
+    },
+    {
+      "code": "21754",
+      "label": "HOME BUILDING BLOCK WORD",
+      "rmse": 2.24,
+      "mae": 1.51,
+      "baseline_rmse": 2.31,
+      "baseline_mae": 1.43,
+      "improvement_pct": -5.6,
+      "hw_rmse": 2.32,
+      "hw_mae": 1.55,
+      "improvement_vs_hw_pct": 2.6
+    }
+  ],
+  "avg_improvement_vs_baseline_pct": 8.6,
+  "prophet_beats_holt_winters": "5/10"
+}

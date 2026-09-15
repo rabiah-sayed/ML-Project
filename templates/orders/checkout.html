@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Checkout - PriceSense{% endblock %}
+{% block content %}
+<h2>Checkout</h2>
+
+<div class="card">
+    <h3 style="margin-top:0;">Order Summary</h3>
+    <table>
+        <thead><tr><th>Product</th><th>Qty</th></tr></thead>
+        <tbody>
+        {% for product, qty in items %}
+            <tr><td>{{ product.name }}</td><td>{{ qty }}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <p class="price" style="margin-top:14px;">Total: {{ total }}</p>
+</div>
+
+{% if not form.fields.address.choices %}
+    <div class="card">
+        <p class="message error" style="margin:0;">You have no saved addresses. <a href="{% url 'address_list' %}">Add one first</a>.</p>
+    </div>
+{% else %}
+<form method="post">
+    {% csrf_token %}
+    <div class="card">
+        <h3 style="margin-top:0;">Shipping Address</h3>
+        <div class="radio-cards">
+            {% for radio in form.address %}
+                <label class="radio-card">{{ radio.tag }} <span class="radio-card-label">{{ radio.choice_label }}</span></label>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="card">
+        <h3 style="margin-top:0;">Payment Method</h3>
+        <div class="radio-cards">
+            {% for radio in form.payment_method %}
+                <label class="radio-card">{{ radio.tag }} <span class="radio-card-label">{{ radio.choice_label }}</span></label>
+            {% endfor %}
+        </div>
+    </div>
+
+    <button type="submit">Place Order &rarr;</button>
+</form>
+{% endif %}
+{% endblock %}

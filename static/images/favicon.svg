@@ -1,0 +1,16 @@
+<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="badgeGrad" x1="3" y1="3" x2="61" y2="61" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7c3aed"/>
+      <stop offset="1" stop-color="#a78bfa"/>
+    </linearGradient>
+  </defs>
+  <rect x="3" y="3" width="58" height="58" rx="18" fill="url(#badgeGrad)"/>
+  <g transform="translate(8,9) scale(2)">
+    <polygon points="6,3 18,3 22,9 12,22 2,9" fill="#f4f2fb"/>
+    <polygon points="12,9 22,9 12,22" fill="#ffffff" fill-opacity="0.35"/>
+    <polygon points="6,3 12,9 2,9" fill="#ffffff" fill-opacity="0.55"/>
+    <path d="M2,9 L22,9 M12,22 L12,9 M6,3 L12,9 M18,3 L12,9" stroke="#5b21b6" stroke-opacity="0.45" stroke-width="0.8" stroke-linejoin="round"/>
+  </g>
+  <circle cx="52" cy="12" r="3.2" fill="#f59e0b"/>
+</svg>

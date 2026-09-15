@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% load catalog_extras %}
+{% block title %}Cart - PriceSense{% endblock %}
+{% block content %}
+<h2>Your Cart {% if lines %}({{ lines|length }}){% endif %}</h2>
+
+{% if lines %}
+<div class="card">
+    {% for line in lines %}
+        <div class="cart-line">
+            <div class="cart-line-thumb">
+                {% if line.product.image %}
+                    <img src="{{ line.product.image.url }}" alt="{{ line.product.name }}">
+                {% else %}
+                    <div class="product-icon-tile" style="background: linear-gradient(160deg, hsl({{ line.product.category.name|category_hue }}, 60%, 40%), hsl({{ line.product.category.name|category_hue }}, 65%, 22%));">
+                        {% product_icon line.product %}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="cart-line-info">
+                <a href="{% url 'product_detail' line.product.id %}">{{ line.product.name }}</a>
+                <div style="color:var(--text-faint); font-size:0.85rem;">{{ line.product.current_price }} each</div>
+            </div>
+            <form method="post" action="{% url 'update_cart_qty' line.product.id %}">
+                {% csrf_token %}
+                <div class="qty-stepper">
+                    <button type="submit" name="delta" value="-1">&minus;</button>
+                    <span class="qty-value">{{ line.qty }}</span>
+                    <button type="submit" name="delta" value="1">&plus;</button>
+                </div>
+            </form>
+            <div class="price" style="width:90px; text-align:right;">{{ line.subtotal }}</div>
+            <form method="post" action="{% url 'remove_from_cart' line.product.id %}">
+                {% csrf_token %}
+                <button type="submit" class="icon-only-btn" title="Remove">
+                    <svg class="icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                </button>
+            </form>
+        </div>
+    {% endfor %}
+</div>
+
+<div class="card" style="max-width:380px; margin-left:auto;">
+    <div class="cart-summary-row"><span>Subtotal</span><span class="value">{{ subtotal }}</span></div>
+    {% if savings > 0 %}<div class="cart-summary-row"><span>Savings</span><span class="value savings">-{{ savings }}</span></div>{% endif %}
+    <div class="cart-summary-row"><span>Shipping</span><span class="value">Free</span></div>
+    <div class="cart-summary-row total"><span>Total</span><span>{{ total }}</span></div>
+    <a href="{% url 'checkout' %}" class="btn" style="width:100%; text-align:center; margin-top:14px;">Proceed to Checkout &rarr;</a>
+</div>
+{% else %}
+    <div class="card">
+        <p>Your cart is empty. <a href="{% url 'product_list' %}">Browse products</a>.</p>
+    </div>
+{% endif %}
+{% endblock %}
